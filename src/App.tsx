@@ -97,20 +97,22 @@ function App() {
 
   // Sync state to local storage (for fallback)
   React.useEffect(() => {
-    if (clients.length > 0) {
+    if (!loading && clients.length > 0) {
       localStorage.setItem('videoflow_clients', JSON.stringify(clients));
     }
-  }, [clients]);
+  }, [clients, loading]);
 
   React.useEffect(() => {
-    if (videos.length > 0) {
+    if (!loading && videos.length > 0) {
       localStorage.setItem('videoflow_videos', JSON.stringify(videos));
     }
-  }, [videos]);
+  }, [videos, loading]);
 
   React.useEffect(() => {
-    localStorage.setItem('videoflow_buffer', safetyBuffer.toString());
-  }, [safetyBuffer]);
+    if (!loading) {
+      localStorage.setItem('videoflow_buffer', safetyBuffer.toString());
+    }
+  }, [safetyBuffer, loading]);
 
   React.useEffect(() => {
     localStorage.setItem('ballu_language', language);
