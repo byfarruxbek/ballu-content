@@ -13,6 +13,7 @@ import type { Client, Video, VideoStatus } from './types';
 import { INITIAL_CLIENTS, getInitialVideos } from './data';
 import type { Language } from './locale';
 import { translations } from './locale';
+import { supabase, hasSupabaseConfig } from './supabaseClient';
 
 function App() {
   const [currentTab, setCurrentTab] = React.useState('dashboard');
@@ -24,32 +25,82 @@ function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   
   // App state
-  const [clients, setClients] = React.useState<Client[]>(() => {
-    const saved = localStorage.getItem('videoflow_clients');
-    return saved ? JSON.parse(saved) : INITIAL_CLIENTS;
-  });
+  const [clients, setClients] = React.useState<Client[]>([]);
+  const [videos, setVideos] = React.useState<Video[]>([]);
+  const [safetyBuffer, setSafetyBuffer] = React.useState<number>(1);
+  const [loading, setLoading] = React.useState(true);
 
-  const [videos, setVideos] = React.useState<Video[]>(() => {
-    const saved = localStorage.getItem('videoflow_videos');
-    return saved ? JSON.parse(saved) : getInitialVideos();
-  });
-
-  const [safetyBuffer, setSafetyBuffer] = React.useState<number>(() => {
-    const saved = localStorage.getItem('videoflow_buffer');
-    return saved ? parseInt(saved, 10) : 1;
-  });
-
-  // Modal control
-  const [isModalOpen, setIsModalOpen] = React.useState(false);
-  const [selectedVideo, setSelectedVideo] = React.useState<Video | null>(null);
-
-  // Sync state to local storage
+  // Load configuration and data (Supabase vs LocalStorage)
   React.useEffect(() => {
-    localStorage.setItem('videoflow_clients', JSON.stringify(clients));
+    async function loadData() {
+      setLoading(true);
+      if (hasSupabaseConfig()) {
+        try {
+          // Fetch clients
+          const { data: dbClients, error: cErr } = await supabase.from('clients').select('*');
+          if (cErr) throw cErr;
+          
+          // Fetch videos
+          const { data: dbVideos, error: vErr } = await supabase.from('videos').select('*');
+          if (vErr) throw vErr;
+
+          // Fetch buffer metadata config if exists
+          const { data: dbMeta } = await supabase.from('settings').select('*').single();
+          
+          if (dbClients && dbClients.length > 0) {
+            setClients(dbClients);
+          } else {
+            // Seed default clients to Supabase if empty
+            await supabase.from('clients').insert(INITIAL_CLIENTS);
+            setClients(INITIAL_CLIENTS);
+          }
+
+          if (dbVideos) {
+            setVideos(dbVideos);
+          } else {
+            const initialVids = getInitialVideos();
+            await supabase.from('videos').insert(initialVids);
+            setVideos(initialVids);
+          }
+
+          if (dbMeta) {
+            setSafetyBuffer(dbMeta.safety_buffer || 1);
+          }
+        } catch (err) {
+          console.error("Supabase load failed, falling back to localStorage", err);
+          fallbackToLocal();
+        }
+      } else {
+        fallbackToLocal();
+      }
+      setLoading(false);
+    }
+
+    function fallbackToLocal() {
+      const savedClients = localStorage.getItem('videoflow_clients');
+      setClients(savedClients ? JSON.parse(savedClients) : INITIAL_CLIENTS);
+
+      const savedVideos = localStorage.getItem('videoflow_videos');
+      setVideos(savedVideos ? JSON.parse(savedVideos) : getInitialVideos());
+
+      const savedBuffer = localStorage.getItem('videoflow_buffer');
+      setSafetyBuffer(savedBuffer ? parseInt(savedBuffer, 10) : 1);
+    }
+
+    loadData();
+  }, []);
+
+  // Sync state to local storage (for fallback)
+  React.useEffect(() => {
+    if (clients.length > 0) {
+      localStorage.setItem('videoflow_clients', JSON.stringify(clients));
+    }
   }, [clients]);
 
   React.useEffect(() => {
-    localStorage.setItem('videoflow_videos', JSON.stringify(videos));
+    if (videos.length > 0) {
+      localStorage.setItem('videoflow_videos', JSON.stringify(videos));
+    }
   }, [videos]);
 
   React.useEffect(() => {
@@ -68,6 +119,10 @@ function App() {
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
+
+  // Modal control
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [selectedVideo, setSelectedVideo] = React.useState<Video | null>(null);
 
   const handleOpenAddModal = () => {
     setSelectedVideo(null);
@@ -94,33 +149,50 @@ function App() {
     setSelectedVideo(tempVideo as Video);
   };
 
-  const handleSaveVideo = (videoData: Partial<Video>) => {
+  const handleSaveVideo = async (videoData: Partial<Video>) => {
     if (videoData.id) {
+      // Edit
       setVideos(prev => prev.map(v => v.id === videoData.id ? { ...v, ...videoData } as Video : v));
+      if (hasSupabaseConfig()) {
+        await supabase.from('videos').update(videoData).eq('id', videoData.id);
+      }
     } else {
+      // New
       const newVideo: Video = {
         ...videoData,
         id: `v-${Date.now()}`,
         safetyBufferDays: safetyBuffer,
       } as Video;
       setVideos(prev => [newVideo, ...prev]);
+      if (hasSupabaseConfig()) {
+        await supabase.from('videos').insert([newVideo]);
+      }
     }
     setIsModalOpen(false);
   };
 
-  const handleStatusChange = (id: string, newStatus: VideoStatus) => {
+  const handleStatusChange = async (id: string, newStatus: VideoStatus) => {
     setVideos(prev => prev.map(v => v.id === id ? { ...v, status: newStatus } : v));
+    if (hasSupabaseConfig()) {
+      await supabase.from('videos').update({ status: newStatus }).eq('id', id);
+    }
   };
 
-  const handleUpdateVideoDates = (id: string, newDelivery: string, newPublish: string) => {
+  const handleUpdateVideoDates = async (id: string, newDelivery: string, newPublish: string) => {
     setVideos(prev => prev.map(v => v.id === id ? { ...v, deliveryDeadline: newDelivery, publishDate: newPublish } : v));
+    if (hasSupabaseConfig()) {
+      await supabase.from('videos').update({ deliveryDeadline: newDelivery, publishDate: newPublish }).eq('id', id);
+    }
   };
 
-  const handleUpdateClientTargets = (clientId: string, reelsTarget: number, youtubeTarget: number) => {
+  const handleUpdateClientTargets = async (clientId: string, reelsTarget: number, youtubeTarget: number) => {
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, reelsTarget, youtubeTarget } : c));
+    if (hasSupabaseConfig()) {
+      await supabase.from('clients').update({ reelsTarget, youtubeTarget }).eq('id', clientId);
+    }
   };
 
-  const handleAddClient = (name: string, specialty: string, reelsTarget: number, youtubeTarget: number) => {
+  const handleAddClient = async (name: string, specialty: string, reelsTarget: number, youtubeTarget: number) => {
     const newClient: Client = {
       id: `c-${Date.now()}`,
       name,
@@ -129,17 +201,39 @@ function App() {
       youtubeTarget,
     };
     setClients(prev => [...prev, newClient]);
+    if (hasSupabaseConfig()) {
+      await supabase.from('clients').insert([newClient]);
+    }
   };
 
-  const handleDeleteClient = (clientId: string) => {
+  const handleDeleteClient = async (clientId: string) => {
     setClients(prev => prev.filter(c => c.id !== clientId));
     setVideos(prev => prev.filter(v => v.clientId !== clientId));
+    if (hasSupabaseConfig()) {
+      await supabase.from('clients').delete().eq('id', clientId);
+      await supabase.from('videos').delete().eq('clientId', clientId);
+    }
+  };
+
+  const handleUpdateSafetyBuffer = async (val: number) => {
+    setSafetyBuffer(val);
+    if (hasSupabaseConfig()) {
+      await supabase.from('settings').upsert({ id: 1, safety_buffer: val });
+    }
   };
 
   const t = translations[language];
 
   // Render view router
   const renderTabContent = () => {
+    if (loading) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '50vh', color: 'var(--text-secondary)', fontWeight: 600 }}>
+          Yuklanmoqda / Loading...
+        </div>
+      );
+    }
+
     switch (currentTab) {
       case 'dashboard':
         return (
@@ -200,7 +294,7 @@ function App() {
           <SettingsView 
             clients={clients} 
             safetyBuffer={safetyBuffer} 
-            onUpdateSafetyBuffer={setSafetyBuffer} 
+            onUpdateSafetyBuffer={handleUpdateSafetyBuffer} 
             language={language}
           />
         );
