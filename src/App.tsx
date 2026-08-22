@@ -56,15 +56,17 @@ function App() {
           if (dbClients && dbClients.length > 0) {
             setClients(dbClients);
           } else {
-            await supabase.from('clients').insert(INITIAL_CLIENTS);
+            const { error: insClientsErr } = await supabase.from('clients').insert(INITIAL_CLIENTS);
+            if (insClientsErr) console.error("Initial clients seed error:", insClientsErr);
             setClients(INITIAL_CLIENTS);
           }
 
-          if (dbVideos) {
+          if (dbVideos && dbVideos.length > 0) {
             setVideos(dbVideos);
           } else {
             const initialVids = getInitialVideos();
-            await supabase.from('videos').insert(initialVids);
+            const { error: insVideosErr } = await supabase.from('videos').insert(initialVids);
+            if (insVideosErr) console.error("Initial videos seed error:", insVideosErr);
             setVideos(initialVids);
           }
 
@@ -192,7 +194,8 @@ function App() {
     if (videoData.id) {
       setVideos(prev => prev.map(v => v.id === videoData.id ? { ...v, ...videoData } as Video : v));
       if (hasSupabaseConfig()) {
-        await supabase.from('videos').update(videoData).eq('id', videoData.id);
+        const { error } = await supabase.from('videos').update(videoData).eq('id', videoData.id);
+        if (error) alert("Xatolik yuz berdi: " + error.message);
       }
     } else {
       const newVideo: Video = {
@@ -202,7 +205,8 @@ function App() {
       } as Video;
       setVideos(prev => [newVideo, ...prev]);
       if (hasSupabaseConfig()) {
-        await supabase.from('videos').insert([newVideo]);
+        const { error } = await supabase.from('videos').insert([newVideo]);
+        if (error) alert("Xatolik yuz berdi: " + error.message);
       }
     }
     setIsModalOpen(false);
@@ -243,7 +247,11 @@ function App() {
     };
     setClients(prev => [...prev, newClient]);
     if (hasSupabaseConfig()) {
-      await supabase.from('clients').insert([newClient]);
+      const { error } = await supabase.from('clients').insert([newClient]);
+      if (error) {
+        console.error("Supabase insert client error:", error);
+        alert("Xatolik yuz berdi: " + error.message);
+      }
     }
   };
 
