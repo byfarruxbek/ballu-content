@@ -24,6 +24,12 @@ function App() {
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   
+  // User Role Management
+  const [userRole, setUserRole] = React.useState<'editor' | 'viewer'>(() => {
+    const saved = localStorage.getItem('ballu_role');
+    return (saved as 'editor' | 'viewer') || 'viewer';
+  });
+  
   // App state
   const [clients, setClients] = React.useState<Client[]>([]);
   const [videos, setVideos] = React.useState<Video[]>([]);
@@ -50,7 +56,6 @@ function App() {
           if (dbClients && dbClients.length > 0) {
             setClients(dbClients);
           } else {
-            // Seed default clients to Supabase if empty
             await supabase.from('clients').insert(INITIAL_CLIENTS);
             setClients(INITIAL_CLIENTS);
           }
@@ -111,6 +116,10 @@ function App() {
     localStorage.setItem('ballu_language', language);
   }, [language]);
 
+  React.useEffect(() => {
+    localStorage.setItem('ballu_role', userRole);
+  }, [userRole]);
+
   // Sync theme
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -120,11 +129,37 @@ function App() {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
+  const handleRoleToggleOrPrompt = () => {
+    if (userRole === 'editor') {
+      setUserRole('viewer');
+    } else {
+      const password = prompt(
+        language === 'uz' 
+          ? 'Tahrirlovchi rejimiga o\'tish uchun parolni kiriting:' 
+          : language === 'ru' 
+            ? 'Введите пароль для перехода в режим редактора:' 
+            : 'Enter password to switch to editor mode:'
+      );
+      if (password === '1111') {
+        setUserRole('editor');
+      } else {
+        alert(
+          language === 'uz' 
+            ? 'Noto\'g\'ri parol!' 
+            : language === 'ru' 
+              ? 'Неверный пароль!' 
+              : 'Incorrect password!'
+        );
+      }
+    }
+  };
+
   // Modal control
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedVideo, setSelectedVideo] = React.useState<Video | null>(null);
 
   const handleOpenAddModal = () => {
+    if (userRole === 'viewer') return;
     setSelectedVideo(null);
     setIsModalOpen(true);
   };
@@ -135,6 +170,7 @@ function App() {
   };
 
   const handleOpenQuickAddWithDate = (dateStr: string) => {
+    if (userRole === 'viewer') return;
     setSelectedVideo(null);
     setIsModalOpen(true);
     const tempVideo: Partial<Video> = {
@@ -150,14 +186,13 @@ function App() {
   };
 
   const handleSaveVideo = async (videoData: Partial<Video>) => {
+    if (userRole === 'viewer') return;
     if (videoData.id) {
-      // Edit
       setVideos(prev => prev.map(v => v.id === videoData.id ? { ...v, ...videoData } as Video : v));
       if (hasSupabaseConfig()) {
         await supabase.from('videos').update(videoData).eq('id', videoData.id);
       }
     } else {
-      // New
       const newVideo: Video = {
         ...videoData,
         id: `v-${Date.now()}`,
@@ -172,6 +207,7 @@ function App() {
   };
 
   const handleStatusChange = async (id: string, newStatus: VideoStatus) => {
+    if (userRole === 'viewer') return;
     setVideos(prev => prev.map(v => v.id === id ? { ...v, status: newStatus } : v));
     if (hasSupabaseConfig()) {
       await supabase.from('videos').update({ status: newStatus }).eq('id', id);
@@ -179,6 +215,7 @@ function App() {
   };
 
   const handleUpdateVideoDates = async (id: string, newDelivery: string, newPublish: string) => {
+    if (userRole === 'viewer') return;
     setVideos(prev => prev.map(v => v.id === id ? { ...v, deliveryDeadline: newDelivery, publishDate: newPublish } : v));
     if (hasSupabaseConfig()) {
       await supabase.from('videos').update({ deliveryDeadline: newDelivery, publishDate: newPublish }).eq('id', id);
@@ -186,6 +223,7 @@ function App() {
   };
 
   const handleUpdateClientTargets = async (clientId: string, reelsTarget: number, youtubeTarget: number) => {
+    if (userRole === 'viewer') return;
     setClients(prev => prev.map(c => c.id === clientId ? { ...c, reelsTarget, youtubeTarget } : c));
     if (hasSupabaseConfig()) {
       await supabase.from('clients').update({ reelsTarget, youtubeTarget }).eq('id', clientId);
@@ -193,6 +231,7 @@ function App() {
   };
 
   const handleAddClient = async (name: string, specialty: string, reelsTarget: number, youtubeTarget: number) => {
+    if (userRole === 'viewer') return;
     const newClient: Client = {
       id: `c-${Date.now()}`,
       name,
@@ -207,6 +246,7 @@ function App() {
   };
 
   const handleDeleteClient = async (clientId: string) => {
+    if (userRole === 'viewer') return;
     setClients(prev => prev.filter(c => c.id !== clientId));
     setVideos(prev => prev.filter(v => v.clientId !== clientId));
     if (hasSupabaseConfig()) {
@@ -216,6 +256,7 @@ function App() {
   };
 
   const handleUpdateSafetyBuffer = async (val: number) => {
+    if (userRole === 'viewer') return;
     setSafetyBuffer(val);
     if (hasSupabaseConfig()) {
       await supabase.from('settings').upsert({ id: 1, safety_buffer: val });
@@ -242,6 +283,7 @@ function App() {
             onOpenCard={handleOpenEditModal} 
             onStatusChange={handleStatusChange} 
             language={language}
+            userRole={userRole}
           />
         );
       case 'weekly':
@@ -251,6 +293,7 @@ function App() {
             onOpenCard={handleOpenEditModal} 
             onUpdateVideoDates={handleUpdateVideoDates} 
             language={language}
+            userRole={userRole}
           />
         );
       case 'calendar':
@@ -260,6 +303,7 @@ function App() {
             onOpenCard={handleOpenEditModal} 
             onOpenQuickAddWithDate={handleOpenQuickAddWithDate} 
             language={language}
+            userRole={userRole}
           />
         );
       case 'videos':
@@ -269,6 +313,7 @@ function App() {
             clients={clients} 
             onOpenCard={handleOpenEditModal} 
             language={language}
+            userRole={userRole}
           />
         );
       case 'clients':
@@ -280,6 +325,7 @@ function App() {
             onAddClient={handleAddClient}
             onDeleteClient={handleDeleteClient}
             language={language}
+            userRole={userRole}
           />
         );
       case 'analytics':
@@ -296,6 +342,7 @@ function App() {
             safetyBuffer={safetyBuffer} 
             onUpdateSafetyBuffer={handleUpdateSafetyBuffer} 
             language={language}
+            userRole={userRole}
           />
         );
       default:
@@ -334,6 +381,8 @@ function App() {
           title={getPageTitle()} 
           onOpenAddModal={handleOpenAddModal} 
           language={language}
+          userRole={userRole}
+          onChangeRole={handleRoleToggleOrPrompt}
         />
         
         {renderTabContent()}
@@ -346,6 +395,7 @@ function App() {
         clients={clients} 
         onSave={handleSaveVideo} 
         language={language}
+        userRole={userRole}
       />
     </div>
   );

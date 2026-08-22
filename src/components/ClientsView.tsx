@@ -11,6 +11,7 @@ interface ClientsViewProps {
   onAddClient: (name: string, specialty: string, reelsTarget: number, youtubeTarget: number) => void;
   onDeleteClient: (clientId: string) => void;
   language: Language;
+  userRole: 'editor' | 'viewer';
 }
 
 export const ClientsView: React.FC<ClientsViewProps> = ({
@@ -20,6 +21,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
   onAddClient,
   onDeleteClient,
   language,
+  userRole,
 }) => {
   const t = translations[language];
 
@@ -67,13 +69,15 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
     <div style={styles.container}>
       <div style={styles.headerRow}>
         <h2 style={styles.title}>{t.clientsTitle}</h2>
-        <button 
-          onClick={() => setShowAddForm(!showAddForm)} 
-          style={styles.addClientTrigger}
-        >
-          <UserPlus size={16} style={{ marginRight: 8 }} />
-          <span>{showAddForm ? t.cancel : t.addClient}</span>
-        </button>
+        {userRole === 'editor' && (
+          <button 
+            onClick={() => setShowAddForm(!showAddForm)} 
+            style={styles.addClientTrigger}
+          >
+            <UserPlus size={16} style={{ marginRight: 8 }} />
+            <span>{showAddForm ? t.cancel : t.addClient}</span>
+          </button>
+        )}
       </div>
 
       {showAddForm && (
@@ -159,7 +163,7 @@ export const ClientsView: React.FC<ClientsViewProps> = ({
                   <span style={styles.specialtyChip}>{client.specialty}</span>
                 </div>
                 <div style={styles.actionButtons}>
-                  {!isEditingThis && (
+                  {!isEditingThis && userRole === 'editor' && (
                     <>
                       <button 
                         onClick={() => startEditing(client)} 

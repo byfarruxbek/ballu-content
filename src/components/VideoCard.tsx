@@ -17,6 +17,7 @@ interface VideoCardProps {
   onClick: () => void;
   onStatusChange?: (id: string, newStatus: VideoStatus) => void;
   language?: Language;
+  userRole?: 'editor' | 'viewer';
 }
 
 export const getPlatformIcon = (platform: Platform) => {
@@ -150,18 +151,29 @@ export const getAlertDetails = (video: Video, lang: Language = 'uz') => {
   return null;
 };
 
-export const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onStatusChange, language = 'uz' }) => {
+export const VideoCard: React.FC<VideoCardProps> = ({ 
+  video, 
+  onClick, 
+  onStatusChange, 
+  language = 'uz',
+  userRole = 'editor' 
+}) => {
   const t = translations[language];
   const alert = getAlertDetails(video, language);
   const statusColor = getStatusColor(video.status);
+  const isViewer = userRole === 'viewer';
 
   const handleDragStart = (e: React.DragEvent) => {
+    if (isViewer) {
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData('text/plain', video.id);
   };
 
   const handleStatusSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     e.stopPropagation();
-    if (onStatusChange) {
+    if (onStatusChange && !isViewer) {
       onStatusChange(video.id, e.target.value as VideoStatus);
     }
   };
@@ -192,12 +204,13 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onStatusCh
 
   return (
     <div 
-      draggable
+      draggable={!isViewer}
       onDragStart={handleDragStart}
       onClick={onClick}
       style={{
         ...styles.card,
-        borderLeft: `4px solid ${statusColor}`
+        borderLeft: `4px solid ${statusColor}`,
+        cursor: isViewer ? 'pointer' : 'grab'
       }}
       className="video-card-element"
     >
@@ -237,20 +250,26 @@ export const VideoCard: React.FC<VideoCardProps> = ({ video, onClick, onStatusCh
 
       {/* Quick Action Footer: Inline status switcher and quick action link dots */}
       <div style={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
-        <select 
-          value={video.status}
-          onChange={handleStatusSelect}
-          style={styles.statusSelect}
-        >
-          <option value="Material Not Received">{t.statusNotReceived}</option>
-          <option value="Material Received">{t.statusReceived}</option>
-          <option value="In Editing">{t.statusEditing}</option>
-          <option value="Revision">{t.statusRevision}</option>
-          <option value="Ready">{t.statusReady}</option>
-          <option value="Scheduled">{t.statusScheduled}</option>
-          <option value="Published">{t.statusPublished}</option>
-          <option value="Cancelled">{t.statusCancelled}</option>
-        </select>
+        {isViewer ? (
+          <span style={getStatusBadgeStyle(video.status)}>
+            {getLocalizedStatus(video.status, language)}
+          </span>
+        ) : (
+          <select 
+            value={video.status}
+            onChange={handleStatusSelect}
+            style={styles.statusSelect}
+          >
+            <option value="Material Not Received">{t.statusNotReceived}</option>
+            <option value="Material Received">{t.statusReceived}</option>
+            <option value="In Editing">{t.statusEditing}</option>
+            <option value="Revision">{t.statusRevision}</option>
+            <option value="Ready">{t.statusReady}</option>
+            <option value="Scheduled">{t.statusScheduled}</option>
+            <option value="Published">{t.statusPublished}</option>
+            <option value="Cancelled">{t.statusCancelled}</option>
+          </select>
+        )}
 
         <div style={styles.linkButtons}>
           {video.rawMaterialLink && (
@@ -293,7 +312,6 @@ const styles = {
     borderRadius: '10px',
     padding: '12px 14px',
     boxShadow: 'var(--shadow-sm)',
-    cursor: 'grab',
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '10px',

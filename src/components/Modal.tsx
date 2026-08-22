@@ -10,6 +10,7 @@ interface ModalProps {
   clients: Client[];
   onSave: (video: Partial<Video>) => void;
   language: Language;
+  userRole: 'editor' | 'viewer';
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,9 +20,11 @@ export const Modal: React.FC<ModalProps> = ({
   clients,
   onSave,
   language,
+  userRole,
 }) => {
   if (!isOpen) return null;
   const t = translations[language];
+  const isViewer = userRole === 'viewer';
 
   const [formData, setFormData] = React.useState<Partial<Video>>({
     clientId: '',
@@ -65,6 +68,7 @@ export const Modal: React.FC<ModalProps> = ({
   }, [video, clients, isOpen]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    if (isViewer) return;
     const { name, value } = e.target;
     
     setFormData((prev) => {
@@ -85,6 +89,7 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   const handleBufferChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (isViewer) return;
     const buffer = parseInt(e.target.value, 10);
     setFormData((prev) => {
       const updated = { ...prev, safetyBufferDays: buffer };
@@ -102,6 +107,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isViewer) return;
     const client = clients.find(c => c.id === formData.clientId);
     const updatedData = {
       ...formData,
@@ -114,7 +120,7 @@ export const Modal: React.FC<ModalProps> = ({
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.header}>
-          <h3 style={styles.title}>{video ? t.editDetails : t.addDetails}</h3>
+          <h3 style={styles.title}>{isViewer ? (language === 'uz' ? 'Video ma\'lumotlari' : language === 'ru' ? 'Информация о видео' : 'Video Information') : (video ? t.editDetails : t.addDetails)}</h3>
           <button style={styles.closeBtn} onClick={onClose}>×</button>
         </div>
 
@@ -127,7 +133,8 @@ export const Modal: React.FC<ModalProps> = ({
                 value={formData.clientId} 
                 onChange={handleChange} 
                 required 
-                style={styles.input}
+                disabled={isViewer}
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }}
               >
                 {clients.map(c => (
                   <option key={c.id} value={c.id}>{c.name} ({c.specialty})</option>
@@ -141,7 +148,8 @@ export const Modal: React.FC<ModalProps> = ({
                 value={formData.platform} 
                 onChange={handleChange} 
                 required 
-                style={styles.input}
+                disabled={isViewer}
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }}
               >
                 <option value="Instagram Reels">Instagram Reels</option>
                 <option value="YouTube Shorts">YouTube Shorts</option>
@@ -158,8 +166,9 @@ export const Modal: React.FC<ModalProps> = ({
               value={formData.title} 
               onChange={handleChange} 
               required 
+              disabled={isViewer}
               placeholder="e.g. Stressni yengish yo'llari"
-              style={styles.input} 
+              style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }} 
             />
           </div>
 
@@ -169,7 +178,8 @@ export const Modal: React.FC<ModalProps> = ({
               <select 
                 value={formData.safetyBufferDays ?? 1} 
                 onChange={handleBufferChange} 
-                style={styles.input}
+                disabled={isViewer}
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }}
               >
                 <option value={0}>{t.sameDay}</option>
                 <option value={1}>{t.oneDay}</option>
@@ -185,7 +195,8 @@ export const Modal: React.FC<ModalProps> = ({
                 value={formData.publishDate} 
                 onChange={handleChange} 
                 required 
-                style={styles.input} 
+                disabled={isViewer}
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }} 
               />
             </div>
             <div style={styles.field}>
@@ -196,7 +207,8 @@ export const Modal: React.FC<ModalProps> = ({
                 value={formData.deliveryDeadline} 
                 onChange={handleChange} 
                 required 
-                style={styles.input} 
+                disabled={isViewer}
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }} 
               />
             </div>
           </div>
@@ -208,7 +220,8 @@ export const Modal: React.FC<ModalProps> = ({
                 name="priority" 
                 value={formData.priority} 
                 onChange={handleChange} 
-                style={styles.input}
+                disabled={isViewer}
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }}
               >
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
@@ -222,7 +235,8 @@ export const Modal: React.FC<ModalProps> = ({
                 name="status" 
                 value={formData.status} 
                 onChange={handleChange} 
-                style={styles.input}
+                disabled={isViewer}
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }}
               >
                 <option value="Material Not Received">{t.statusNotReceived}</option>
                 <option value="Material Received">{t.statusReceived}</option>
@@ -243,8 +257,9 @@ export const Modal: React.FC<ModalProps> = ({
               name="rawMaterialLink" 
               value={formData.rawMaterialLink} 
               onChange={handleChange} 
+              disabled={isViewer}
               placeholder="https://..."
-              style={styles.input} 
+              style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }} 
             />
           </div>
 
@@ -256,8 +271,9 @@ export const Modal: React.FC<ModalProps> = ({
                 name="finalVideoLink" 
                 value={formData.finalVideoLink} 
                 onChange={handleChange} 
+                disabled={isViewer}
                 placeholder="https://..."
-                style={styles.input} 
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }} 
               />
             </div>
             <div style={styles.field}>
@@ -267,8 +283,9 @@ export const Modal: React.FC<ModalProps> = ({
                 name="publishedPostLink" 
                 value={formData.publishedPostLink} 
                 onChange={handleChange} 
+                disabled={isViewer}
                 placeholder="https://..."
-                style={styles.input} 
+                style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }} 
               />
             </div>
           </div>
@@ -280,14 +297,15 @@ export const Modal: React.FC<ModalProps> = ({
               value={formData.notes} 
               onChange={handleChange} 
               rows={3} 
+              disabled={isViewer}
               placeholder="Tuzatishlar, topshiriqlar..."
-              style={styles.textarea} 
+              style={{ ...styles.textarea, opacity: isViewer ? 0.7 : 1 }} 
             />
           </div>
 
           <div style={styles.footerBtns}>
-            <button type="button" onClick={onClose} style={styles.cancelBtn}>{t.cancel}</button>
-            <button type="submit" style={styles.saveBtn}>{t.save}</button>
+            <button type="button" onClick={onClose} style={styles.cancelBtn}>{isViewer ? (language === 'uz' ? 'Yopish' : language === 'ru' ? 'Закрыть' : 'Close') : t.cancel}</button>
+            {!isViewer && <button type="submit" style={styles.saveBtn}>{t.save}</button>}
           </div>
         </form>
       </div>
@@ -367,6 +385,7 @@ const styles = {
     color: 'var(--text-primary)',
     outline: 'none',
     fontSize: '14px',
+    transition: 'all 0.2s ease',
   },
   textarea: {
     padding: '10px 12px',
@@ -378,6 +397,7 @@ const styles = {
     fontSize: '14px',
     fontFamily: 'inherit',
     resize: 'vertical' as const,
+    transition: 'all 0.2s ease',
   },
   footerBtns: {
     display: 'flex',

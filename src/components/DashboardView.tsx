@@ -10,6 +10,7 @@ interface DashboardViewProps {
   onOpenCard: (video: Video) => void;
   onStatusChange: (id: string, newStatus: any) => void;
   language: Language;
+  userRole: 'editor' | 'viewer';
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -17,6 +18,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenCard,
   onStatusChange,
   language,
+  userRole,
 }) => {
   const t = translations[language];
   const todayStr = new Date().toISOString().split('T')[0];
@@ -167,6 +169,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={() => onOpenCard(v)} 
                 onStatusChange={onStatusChange}
                 language={language}
+                userRole={userRole}
               />
             ))}
           </div>

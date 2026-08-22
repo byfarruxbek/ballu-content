@@ -9,6 +9,7 @@ interface WeeklyPlannerViewProps {
   onOpenCard: (video: Video) => void;
   onUpdateVideoDates: (id: string, newDelivery: string, newPublish: string) => void;
   language: Language;
+  userRole: 'editor' | 'viewer';
 }
 
 export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
@@ -16,6 +17,7 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
   onOpenCard,
   onUpdateVideoDates,
   language,
+  userRole,
 }) => {
   const t = translations[language];
 
@@ -160,6 +162,7 @@ export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({
                           video={video} 
                           onClick={() => onOpenCard(video)} 
                           language={language}
+                          userRole={userRole}
                         />
                       </div>
                     );

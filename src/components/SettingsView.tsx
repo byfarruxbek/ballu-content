@@ -8,6 +8,7 @@ interface SettingsViewProps {
   safetyBuffer: number;
   onUpdateSafetyBuffer: (val: number) => void;
   language: Language;
+  userRole: 'editor' | 'viewer';
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -15,6 +16,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   safetyBuffer,
   onUpdateSafetyBuffer,
   language,
+  userRole,
 }) => {
   const t = translations[language];
 
@@ -32,7 +34,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <select 
             value={safetyBuffer} 
             onChange={(e) => onUpdateSafetyBuffer(parseInt(e.target.value, 10))}
-            style={styles.select}
+            disabled={userRole === 'viewer'}
+            style={{
+              ...styles.select,
+              opacity: userRole === 'viewer' ? 0.6 : 1,
+              cursor: userRole === 'viewer' ? 'default' : 'pointer'
+            }}
           >
             <option value={0}>{t.sameDay}</option>
             <option value={1}>{t.oneDay}</option>

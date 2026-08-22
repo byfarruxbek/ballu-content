@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Shield, LogOut } from 'lucide-react';
 import type { Language } from '../locale';
 import { translations } from '../locale';
 
@@ -7,9 +7,17 @@ interface HeaderProps {
   title: string;
   onOpenAddModal: () => void;
   language: Language;
+  userRole: 'editor' | 'viewer';
+  onChangeRole: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ title, onOpenAddModal, language }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  title, 
+  onOpenAddModal, 
+  language, 
+  userRole, 
+  onChangeRole 
+}) => {
   const t = translations[language];
 
   const getFormattedDate = () => {
@@ -42,10 +50,31 @@ export const Header: React.FC<HeaderProps> = ({ title, onOpenAddModal, language 
         <h1 style={styles.title}>{title}</h1>
         <p style={styles.subtitle}>{getFormattedDate()}</p>
       </div>
-      <button onClick={onOpenAddModal} style={styles.addButton}>
-        <Plus size={16} style={{ marginRight: 6 }} />
-        <span>{t.newVideo}</span>
-      </button>
+      
+      <div style={styles.actions}>
+        <button onClick={onChangeRole} style={{
+          ...styles.roleIndicator,
+          backgroundColor: userRole === 'editor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)',
+          color: userRole === 'editor' ? '#10b981' : 'var(--text-secondary)',
+          border: `1px solid ${userRole === 'editor' ? '#10b98133' : 'var(--border-color)'}`,
+        }}>
+          <Shield size={14} style={{ marginRight: 6 }} />
+          <span style={{ textTransform: 'capitalize' }}>
+            {userRole === 'editor' 
+              ? (language === 'uz' ? 'Tahrirlovchi' : language === 'ru' ? 'Редактор' : 'Editor')
+              : (language === 'uz' ? 'Ko\'ruvchi' : language === 'ru' ? 'Наблюдатель' : 'Viewer')
+            }
+          </span>
+          <LogOut size={12} style={{ marginLeft: 8, opacity: 0.6 }} />
+        </button>
+
+        {userRole === 'editor' && (
+          <button onClick={onOpenAddModal} style={styles.addButton}>
+            <Plus size={16} style={{ marginRight: 6 }} />
+            <span>{t.newVideo}</span>
+          </button>
+        )}
+      </div>
     </header>
   );
 };
@@ -72,18 +101,34 @@ const styles = {
     fontWeight: 500,
     textTransform: 'capitalize' as const,
   },
+  actions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  roleIndicator: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '8px 14px',
+    borderRadius: '8px',
+    fontSize: '13px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'all 0.2s ease',
+  },
   addButton: {
     display: 'flex',
     alignItems: 'center',
     padding: '8px 16px',
     borderRadius: '8px',
-    backgroundColor: '#3b82f6',
+    backgroundColor: 'var(--accent-color)',
     color: '#ffffff',
     border: 'none',
     fontWeight: 600,
     fontSize: '14px',
     cursor: 'pointer',
-    boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+    boxShadow: '0 2px 8px rgba(79, 70, 229, 0.3)',
     transition: 'all 0.15s ease',
   },
 };

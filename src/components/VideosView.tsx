@@ -10,6 +10,7 @@ interface VideosViewProps {
   clients: Client[];
   onOpenCard: (video: Video) => void;
   language: Language;
+  userRole: 'editor' | 'viewer';
 }
 
 export const VideosView: React.FC<VideosViewProps> = ({
@@ -17,6 +18,7 @@ export const VideosView: React.FC<VideosViewProps> = ({
   clients,
   onOpenCard,
   language,
+  userRole,
 }) => {
   const t = translations[language];
 
@@ -143,7 +145,7 @@ export const VideosView: React.FC<VideosViewProps> = ({
       ) : viewMode === 'grid' ? (
         <div style={styles.videosGrid}>
           {filteredVideos.map(video => (
-            <VideoCard key={video.id} video={video} onClick={() => onOpenCard(video)} language={language} />
+            <VideoCard key={video.id} video={video} onClick={() => onOpenCard(video)} language={language} userRole={userRole} />
           ))}
         </div>
       ) : (

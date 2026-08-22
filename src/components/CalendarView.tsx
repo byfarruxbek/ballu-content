@@ -9,6 +9,7 @@ interface CalendarViewProps {
   onOpenCard: (video: Video) => void;
   onOpenQuickAddWithDate: (dateStr: string) => void;
   language: Language;
+  userRole: 'editor' | 'viewer';
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({
@@ -16,6 +17,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   onOpenCard,
   onOpenQuickAddWithDate,
   language,
+  userRole,
 }) => {
   const t = translations[language];
   const [currentDate, setCurrentDate] = React.useState<Date>(new Date());
@@ -95,8 +97,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           return (
             <div 
               key={dateStr} 
-              style={styles.dayCell}
-              onClick={() => onOpenQuickAddWithDate(dateStr)}
+              style={{
+                ...styles.dayCell,
+                cursor: userRole === 'viewer' ? 'default' : 'pointer'
+              }}
+              onClick={() => {
+                if (userRole !== 'viewer') {
+                  onOpenQuickAddWithDate(dateStr);
+                }
+              }}
             >
               <div style={styles.dayNumber}>{day.getDate()}</div>
               <div style={styles.eventsContainer}>
