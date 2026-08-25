@@ -11,6 +11,7 @@ interface VideosViewProps {
   onOpenCard: (video: Video) => void;
   language: Language;
   userRole: 'editor' | 'manager' | 'viewer';
+  onDeleteAllVideos?: () => void;
 }
 
 export const VideosView: React.FC<VideosViewProps> = ({
@@ -19,6 +20,7 @@ export const VideosView: React.FC<VideosViewProps> = ({
   onOpenCard,
   language,
   userRole,
+  onDeleteAllVideos,
 }) => {
   const t = translations[language];
 
@@ -64,15 +66,57 @@ export const VideosView: React.FC<VideosViewProps> = ({
     <div style={styles.container}>
       {/* Search & Filter bar */}
       <div style={styles.filterBar}>
-        <div style={styles.searchBox}>
-          <Search size={16} color="var(--text-muted)" style={{ marginLeft: 12 }} />
-          <input 
-            type="text" 
-            placeholder={t.searchPlaceholder}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={styles.searchInput}
-          />
+        <div style={{ display: 'flex', gap: '16px', flexGrow: 1, width: '100%' }}>
+          <div style={{ ...styles.searchBox, flexGrow: 1 }}>
+            <Search size={16} color="var(--text-muted)" style={{ marginLeft: 12 }} />
+            <input 
+              type="text" 
+              placeholder={t.searchPlaceholder}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={styles.searchInput}
+            />
+          </div>
+          {userRole === 'editor' && onDeleteAllVideos && (
+            <button
+              onClick={() => {
+                const pass = prompt(
+                  language === 'uz' 
+                    ? 'Barcha videolarni o\'chirib yuborish uchun parolni kiriting:' 
+                    : language === 'ru' 
+                      ? 'Введите пароль для удаления всех видео:' 
+                      : 'Enter password to delete all videos:'
+                );
+                if (pass === '1234') {
+                  onDeleteAllVideos();
+                } else if (pass !== null) {
+                  alert(
+                    language === 'uz' 
+                      ? 'Noto\'g\'ri parol!' 
+                      : language === 'ru' 
+                        ? 'Неверный пароль!' 
+                        : 'Incorrect password!'
+                  );
+                }
+              }}
+              style={{
+                padding: '0 16px',
+                borderRadius: '8px',
+                border: '1px solid #ef4444',
+                backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                color: '#ef4444',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {language === 'uz' ? 'Barcha videolarni o\'chirish' : language === 'ru' ? 'Удалить все видео' : 'Delete All Videos'}
+            </button>
+          )}
         </div>
 
         <div style={styles.selectorsRow}>

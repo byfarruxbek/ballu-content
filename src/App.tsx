@@ -277,6 +277,22 @@ function App() {
     }
   };
 
+  const handleDeleteAllVideos = async () => {
+    if (userRole !== 'editor') return;
+    setVideos([]);
+    if (hasSupabaseConfig()) {
+      const { error } = await supabase.from('videos').delete().neq('id', 'placeholder');
+      if (error) {
+        alert("Videolarni o'chirishda xatolik yuz berdi: " + error.message);
+      } else {
+        alert(language === 'uz' ? "Barcha videolar o'chirildi!" : language === 'ru' ? "Все видео удалены!" : "All videos deleted successfully!");
+      }
+    } else {
+      localStorage.removeItem('videoflow_videos');
+      alert(language === 'uz' ? "Barcha videolar o'chirildi!" : language === 'ru' ? "Все видео удалены!" : "All videos deleted successfully!");
+    }
+  };
+
   const handleUpdateSafetyBuffer = async (val: number) => {
     if (userRole === 'viewer') return;
     setSafetyBuffer(val);
@@ -355,6 +371,7 @@ function App() {
             onOpenCard={handleOpenEditModal} 
             language={language}
             userRole={userRole}
+            onDeleteAllVideos={handleDeleteAllVideos}
           />
         );
       case 'clients':
