@@ -12,7 +12,8 @@ import {
   Video,
   Globe,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  DollarSign
 } from 'lucide-react';
 import type { Language } from '../locale';
 import { translations } from '../locale';
@@ -26,6 +27,7 @@ interface SidebarProps {
   setLanguage: (lang: Language) => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
+  userRole: 'editor' | 'manager' | 'viewer';
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -36,19 +38,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
   language,
   setLanguage,
   isCollapsed,
-  setIsCollapsed
+  setIsCollapsed,
+  userRole
 }) => {
   const t = translations[language];
 
-  const tabs = [
-    { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard },
-    { id: 'weekly', label: t.weeklyPlanner, icon: CalendarDays },
-    { id: 'calendar', label: t.calendar, icon: CalendarRange },
-    { id: 'videos', label: t.videos, icon: Film },
-    { id: 'clients', label: t.clients, icon: Users },
-    { id: 'analytics', label: t.analytics, icon: BarChart3 },
-    { id: 'settings', label: t.settings, icon: Settings },
+  // Tab definitions
+  const allTabs = [
+    { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard, roles: ['editor', 'manager', 'viewer'] },
+    { id: 'weekly', label: t.weeklyPlanner, icon: CalendarDays, roles: ['editor', 'manager', 'viewer'] },
+    { id: 'calendar', label: t.calendar, icon: CalendarRange, roles: ['editor', 'manager', 'viewer'] },
+    { id: 'videos', label: t.videos, icon: Film, roles: ['editor', 'manager', 'viewer'] },
+    { id: 'clients', label: t.clients, icon: Users, roles: ['editor', 'manager', 'viewer'] },
+    { id: 'finance', label: language === 'uz' ? 'Moliya' : language === 'ru' ? 'Финансы' : 'Finance', icon: DollarSign, roles: ['editor'] },
+    { id: 'analytics', label: t.analytics, icon: BarChart3, roles: ['editor', 'manager', 'viewer'] },
+    { id: 'settings', label: t.settings, icon: Settings, roles: ['editor', 'manager'] },
   ];
+
+  // Filter tabs based on active userRole permissions
+  const tabs = allTabs.filter(tab => tab.roles.includes(userRole));
 
   return (
     <aside style={{

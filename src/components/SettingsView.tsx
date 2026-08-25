@@ -9,7 +9,7 @@ interface SettingsViewProps {
   onUpdateSafetyBuffer: (val: number) => void;
   onClearAllDatabase?: () => void;
   language: Language;
-  userRole: 'editor' | 'viewer';
+  userRole: 'editor' | 'manager' | 'viewer';
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({

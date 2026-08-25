@@ -10,7 +10,7 @@ interface DashboardViewProps {
   onOpenCard: (video: Video) => void;
   onStatusChange: (id: string, newStatus: any) => void;
   language: Language;
-  userRole: 'editor' | 'viewer';
+  userRole: 'editor' | 'manager' | 'viewer';
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({

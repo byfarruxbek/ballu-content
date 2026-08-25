@@ -10,7 +10,7 @@ interface VideosViewProps {
   clients: Client[];
   onOpenCard: (video: Video) => void;
   language: Language;
-  userRole: 'editor' | 'viewer';
+  userRole: 'editor' | 'manager' | 'viewer';
 }
 
 export const VideosView: React.FC<VideosViewProps> = ({

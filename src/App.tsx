@@ -8,6 +8,7 @@ import { VideosView } from './components/VideosView';
 import { ClientsView } from './components/ClientsView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { SettingsView } from './components/SettingsView';
+import { FinanceView } from './components/FinanceView';
 import { Modal } from './components/Modal';
 import type { Client, Video, VideoStatus } from './types';
 import { INITIAL_CLIENTS, getInitialVideos } from './data';
@@ -24,10 +25,9 @@ function App() {
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   
-  // User Role Management
-  const [userRole, setUserRole] = React.useState<'editor' | 'viewer'>(() => {
+  const [userRole, setUserRole] = React.useState<'editor' | 'manager' | 'viewer'>(() => {
     const saved = localStorage.getItem('ballu_role');
-    return (saved as 'editor' | 'viewer') || 'viewer';
+    return (saved as 'editor' | 'manager' | 'viewer') || 'viewer';
   });
   
   // App state
@@ -134,19 +134,21 @@ function App() {
   };
 
   const handleRoleToggleOrPrompt = () => {
-    if (userRole === 'editor') {
+    if (userRole === 'editor' || userRole === 'manager') {
       setUserRole('viewer');
     } else {
       const password = prompt(
         language === 'uz' 
-          ? 'Tahrirlovchi rejimiga o\'tish uchun parolni kiriting:' 
+          ? 'Rejimga o\'tish uchun parolni kiriting:\n(Meneger: 1111, Editor: 1212)' 
           : language === 'ru' 
-            ? 'Введите пароль для перехода в режим редактора:' 
-            : 'Enter password to switch to editor mode:'
+            ? 'Введите пароль для входа:\n(Менеджер: 1111, Редактор: 1212)' 
+            : 'Enter password to change role:\n(Manager: 1111, Editor: 1212)'
       );
       if (password === '1111') {
+        setUserRole('manager');
+      } else if (password === '1212') {
         setUserRole('editor');
-      } else {
+      } else if (password !== null) {
         alert(
           language === 'uz' 
             ? 'Noto\'g\'ri parol!' 
@@ -367,6 +369,14 @@ function App() {
             userRole={userRole}
           />
         );
+      case 'finance':
+        return (
+          <FinanceView 
+            videos={videos} 
+            clients={clients} 
+            language={language}
+          />
+        );
       case 'analytics':
         return (
           <AnalyticsView 
@@ -397,6 +407,7 @@ function App() {
       case 'calendar': return t.calendar;
       case 'videos': return t.videos;
       case 'clients': return t.clients;
+      case 'finance': return language === 'uz' ? 'Moliya' : language === 'ru' ? 'Финансы' : 'Finance';
       case 'analytics': return t.analytics;
       case 'settings': return t.settings;
       default: return currentTab;
@@ -414,6 +425,7 @@ function App() {
         setLanguage={setLanguage}
         isCollapsed={isSidebarCollapsed}
         setIsCollapsed={setIsSidebarCollapsed}
+        userRole={userRole}
       />
       
       <main style={{ flexGrow: 1, padding: '40px', overflowY: 'auto', height: '100vh' }}>

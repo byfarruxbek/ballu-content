@@ -9,7 +9,7 @@ interface WeeklyPlannerViewProps {
   onOpenCard: (video: Video) => void;
   onUpdateVideoDates: (id: string, newDelivery: string, newPublish: string) => void;
   language: Language;
-  userRole: 'editor' | 'viewer';
+  userRole: 'editor' | 'manager' | 'viewer';
 }
 
 export const WeeklyPlannerView: React.FC<WeeklyPlannerViewProps> = ({

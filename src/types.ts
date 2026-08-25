@@ -27,6 +27,9 @@ export interface Video {
   priority: Priority;
   status: VideoStatus;
   safetyBufferDays: number;
+  // Finance additions
+  price?: number;
+  isPaid?: boolean;
 }
 
 export interface Client {
@@ -35,4 +38,6 @@ export interface Client {
   specialty: string;
   reelsTarget: number;
   youtubeTarget: number;
+  // Finance target targets
+  monthlyContractPrice?: number;
 }

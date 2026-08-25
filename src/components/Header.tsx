@@ -7,7 +7,7 @@ interface HeaderProps {
   title: string;
   onOpenAddModal: () => void;
   language: Language;
-  userRole: 'editor' | 'viewer';
+  userRole: 'editor' | 'manager' | 'viewer';
   onChangeRole: () => void;
 }
 
@@ -44,6 +44,16 @@ export const Header: React.FC<HeaderProps> = ({
     return today.toLocaleDateString(locales[language] || 'en-US', options);
   };
 
+  const getRoleLabel = () => {
+    if (userRole === 'editor') {
+      return language === 'uz' ? 'Tahrirlovchi' : language === 'ru' ? 'Редактор' : 'Editor';
+    }
+    if (userRole === 'manager') {
+      return language === 'uz' ? 'Meneger' : language === 'ru' ? 'Менеджер' : 'Manager';
+    }
+    return language === 'uz' ? 'Ko\'ruvchi' : language === 'ru' ? 'Наблюдатель' : 'Viewer';
+  };
+
   return (
     <header style={styles.header}>
       <div>
@@ -54,21 +64,32 @@ export const Header: React.FC<HeaderProps> = ({
       <div style={styles.actions}>
         <button onClick={onChangeRole} style={{
           ...styles.roleIndicator,
-          backgroundColor: userRole === 'editor' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-          color: userRole === 'editor' ? '#10b981' : 'var(--text-secondary)',
-          border: `1px solid ${userRole === 'editor' ? '#10b98133' : 'var(--border-color)'}`,
+          backgroundColor: userRole === 'editor' 
+            ? 'rgba(16, 185, 129, 0.1)' 
+            : userRole === 'manager' 
+              ? 'rgba(99, 102, 241, 0.1)' 
+              : 'rgba(107, 114, 128, 0.1)',
+          color: userRole === 'editor' 
+            ? '#10b981' 
+            : userRole === 'manager' 
+              ? '#6366f1' 
+              : 'var(--text-secondary)',
+          border: `1px solid ${
+            userRole === 'editor' 
+              ? '#10b98133' 
+              : userRole === 'manager' 
+                ? '#6366f133' 
+                : 'var(--border-color)'
+          }`,
         }}>
           <Shield size={14} style={{ marginRight: 6 }} />
           <span style={{ textTransform: 'capitalize' }}>
-            {userRole === 'editor' 
-              ? (language === 'uz' ? 'Tahrirlovchi' : language === 'ru' ? 'Редактор' : 'Editor')
-              : (language === 'uz' ? 'Ko\'ruvchi' : language === 'ru' ? 'Наблюдатель' : 'Viewer')
-            }
+            {getRoleLabel()}
           </span>
           <LogOut size={12} style={{ marginLeft: 8, opacity: 0.6 }} />
         </button>
 
-        {userRole === 'editor' && (
+        {(userRole === 'editor' || userRole === 'manager') && (
           <button onClick={onOpenAddModal} style={styles.addButton}>
             <Plus size={16} style={{ marginRight: 6 }} />
             <span>{t.newVideo}</span>

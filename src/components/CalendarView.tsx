@@ -9,7 +9,7 @@ interface CalendarViewProps {
   onOpenCard: (video: Video) => void;
   onOpenQuickAddWithDate: (dateStr: string) => void;
   language: Language;
-  userRole: 'editor' | 'viewer';
+  userRole: 'editor' | 'manager' | 'viewer';
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({

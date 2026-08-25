@@ -11,7 +11,7 @@ interface ClientsViewProps {
   onAddClient: (name: string, specialty: string, reelsTarget: number, youtubeTarget: number) => void;
   onDeleteClient: (clientId: string) => void;
   language: Language;
-  userRole: 'editor' | 'viewer';
+  userRole: 'editor' | 'manager' | 'viewer';
 }
 
 export const ClientsView: React.FC<ClientsViewProps> = ({

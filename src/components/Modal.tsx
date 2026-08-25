@@ -11,7 +11,7 @@ interface ModalProps {
   onSave: (video: Partial<Video>) => void;
   onDelete?: (id: string) => void;
   language: Language;
-  userRole: 'editor' | 'viewer';
+  userRole: 'editor' | 'manager' | 'viewer';
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -41,11 +41,17 @@ export const Modal: React.FC<ModalProps> = ({
     priority: 'Medium',
     status: 'Material Not Received',
     safetyBufferDays: 1,
+    price: 0,
+    isPaid: false,
   });
 
   React.useEffect(() => {
     if (video) {
-      setFormData(video);
+      setFormData({
+        price: 0,
+        isPaid: false,
+        ...video
+      });
     } else {
       const today = new Date().toISOString().split('T')[0];
       const tomorrowDate = new Date();
@@ -65,6 +71,8 @@ export const Modal: React.FC<ModalProps> = ({
         priority: 'Medium',
         status: 'Material Not Received',
         safetyBufferDays: 1,
+        price: 0,
+        isPaid: false,
       });
     }
   }, [video, clients, isOpen]);
@@ -252,6 +260,41 @@ export const Modal: React.FC<ModalProps> = ({
             </div>
           </div>
 
+          {/* Pricing settings for Editors only */}
+          {userRole === 'editor' && (
+            <div style={styles.row}>
+              <div style={styles.field}>
+                <label style={styles.label}>{language === 'uz' ? 'Video narxi (UZS)' : language === 'ru' ? 'Цена видео (UZS)' : 'Video Price (UZS)'}</label>
+                <input 
+                  type="number" 
+                  name="price" 
+                  value={formData.price || 0} 
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10) || 0;
+                    setFormData(prev => ({ ...prev, price: val }));
+                  }} 
+                  placeholder="e.g. 500000"
+                  style={styles.input} 
+                />
+              </div>
+              <div style={styles.field}>
+                <label style={styles.label}>{language === 'uz' ? 'To\'lov holati' : language === 'ru' ? 'Статус оплаты' : 'Payment Status'}</label>
+                <select 
+                  name="isPaid" 
+                  value={formData.isPaid ? 'true' : 'false'} 
+                  onChange={(e) => {
+                    const val = e.target.value === 'true';
+                    setFormData(prev => ({ ...prev, isPaid: val }));
+                  }}
+                  style={styles.input}
+                >
+                  <option value="false">{language === 'uz' ? 'Kutilmoqda (Unpaid)' : language === 'ru' ? 'Ожидание' : 'Unpaid'}</option>
+                  <option value="true">{language === 'uz' ? 'To\'landi (Paid)' : language === 'ru' ? 'Оплачено' : 'Paid'}</option>
+                </select>
+              </div>
+            </div>
+          )}
+
           <div style={styles.field}>
             <label style={styles.label}>{t.rawLabel}</label>
             <input 
@@ -306,7 +349,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
 
           <div style={styles.footerBtns}>
-            {video && video.id && !isViewer && onDelete && (
+            {video && video.id && userRole === 'editor' && onDelete && (
               <button 
                 type="button" 
                 onClick={() => {

@@ -17,7 +17,7 @@ interface VideoCardProps {
   onClick: () => void;
   onStatusChange?: (id: string, newStatus: VideoStatus) => void;
   language?: Language;
-  userRole?: 'editor' | 'viewer';
+  userRole?: 'editor' | 'manager' | 'viewer';
 }
 
 export const getPlatformIcon = (platform: Platform) => {
@@ -162,9 +162,10 @@ export const VideoCard: React.FC<VideoCardProps> = ({
   const alert = getAlertDetails(video, language);
   const statusColor = getStatusColor(video.status);
   const isViewer = userRole === 'viewer';
+  const canEdit = userRole === 'editor' || userRole === 'manager';
 
   const handleDragStart = (e: React.DragEvent) => {
-    if (isViewer) {
+    if (!canEdit) {
       e.preventDefault();
       return;
     }
@@ -210,7 +211,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({
       style={{
         ...styles.card,
         borderLeft: `4px solid ${statusColor}`,
-        cursor: isViewer ? 'pointer' : 'grab'
+        cursor: canEdit ? 'grab' : 'pointer'
       }}
       className="video-card-element"
     >
@@ -250,7 +251,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({
 
       {/* Quick Action Footer: Inline status switcher and quick action link dots */}
       <div style={styles.cardFooter} onClick={(e) => e.stopPropagation()}>
-        {isViewer ? (
+        {!canEdit ? (
           <span style={getStatusBadgeStyle(video.status)}>
             {getLocalizedStatus(video.status, language)}
           </span>
