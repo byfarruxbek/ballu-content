@@ -12,6 +12,19 @@ export type VideoStatus =
 
 export type Priority = 'Low' | 'Medium' | 'High' | 'Urgent';
 
+export interface SubTask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
+export interface FeedbackItem {
+  id: string;
+  timestamp: string; // e.g. "0:15"
+  comment: string;
+  resolved: boolean;
+}
+
 export interface Video {
   id: string;
   clientId: string;
@@ -30,6 +43,10 @@ export interface Video {
   // Finance additions
   price?: number;
   isPaid?: boolean;
+  // Professional workflow additions
+  subTasks?: SubTask[];
+  feedbacks?: FeedbackItem[];
+  assigneeName?: string; // name of the video editor/crew assigned
 }
 
 export interface Client {

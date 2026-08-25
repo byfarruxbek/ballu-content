@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Video, Client } from '../types';
+import type { Video, Client, SubTask, FeedbackItem } from '../types';
 import type { Language } from '../locale';
 import { translations } from '../locale';
 
@@ -27,6 +27,7 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
   const t = translations[language];
   const isViewer = userRole === 'viewer';
+  const isEditor = userRole === 'editor';
 
   const [formData, setFormData] = React.useState<Partial<Video>>({
     clientId: '',
@@ -43,13 +44,24 @@ export const Modal: React.FC<ModalProps> = ({
     safetyBufferDays: 1,
     price: 0,
     isPaid: false,
+    subTasks: [],
+    feedbacks: [],
+    assigneeName: '',
   });
+
+  // State values for adding new subtask or feedback items in UI
+  const [newSubTaskText, setNewSubTaskText] = React.useState('');
+  const [newFeedbackTime, setNewFeedbackTime] = React.useState('');
+  const [newFeedbackText, setNewFeedbackText] = React.useState('');
 
   React.useEffect(() => {
     if (video) {
       setFormData({
         price: 0,
         isPaid: false,
+        subTasks: [],
+        feedbacks: [],
+        assigneeName: '',
         ...video
       });
     } else {
@@ -73,6 +85,9 @@ export const Modal: React.FC<ModalProps> = ({
         safetyBufferDays: 1,
         price: 0,
         isPaid: false,
+        subTasks: [],
+        feedbacks: [],
+        assigneeName: '',
       });
     }
   }, [video, clients, isOpen]);
@@ -113,6 +128,66 @@ export const Modal: React.FC<ModalProps> = ({
       }
       return updated;
     });
+  };
+
+  // Subtask managers
+  const handleAddSubTask = () => {
+    if (!newSubTaskText.trim()) return;
+    const newItem: SubTask = {
+      id: `st-${Date.now()}`,
+      title: newSubTaskText.trim(),
+      completed: false,
+    };
+    setFormData(prev => ({
+      ...prev,
+      subTasks: [...(prev.subTasks || []), newItem]
+    }));
+    setNewSubTaskText('');
+  };
+
+  const handleToggleSubTask = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      subTasks: (prev.subTasks || []).map(st => st.id === id ? { ...st, completed: !st.completed } : st)
+    }));
+  };
+
+  const handleDeleteSubTask = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      subTasks: (prev.subTasks || []).filter(st => st.id !== id)
+    }));
+  };
+
+  // Feedback managers
+  const handleAddFeedback = () => {
+    if (!newFeedbackText.trim()) return;
+    const newItem: FeedbackItem = {
+      id: `fb-${Date.now()}`,
+      timestamp: newFeedbackTime.trim() || '0:00',
+      comment: newFeedbackText.trim(),
+      resolved: false,
+    };
+    setFormData(prev => ({
+      ...prev,
+      feedbacks: [...(prev.feedbacks || []), newItem]
+    }));
+    setNewFeedbackTime('');
+    setNewFeedbackText('');
+  };
+
+  const handleToggleFeedback = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      feedbacks: (prev.feedbacks || []).map(fb => fb.id === id ? { ...fb, resolved: !fb.resolved } : fb)
+    }));
+  };
+
+  const handleDeleteFeedback = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      feedbacks: (prev.feedbacks || []).filter(fb => fb.id !== id)
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -191,10 +266,10 @@ export const Modal: React.FC<ModalProps> = ({
                 disabled={isViewer}
                 style={{ ...styles.input, opacity: isViewer ? 0.7 : 1 }}
               >
-                <option value={0}>{t.sameDay}</option>
-                <option value={1}>{t.oneDay}</option>
-                <option value={2}>{t.twoDays}</option>
-                <option value={3}>{t.threeDays}</option>
+                <option value="0">{t.sameDay}</option>
+                <option value="1">{t.oneDay}</option>
+                <option value="2">{t.twoDays}</option>
+                <option value="3">{t.threeDays}</option>
               </select>
             </div>
             <div style={styles.field}>
@@ -261,7 +336,7 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
 
           {/* Pricing settings for Editors only */}
-          {userRole === 'editor' && (
+          {isEditor && (
             <div style={styles.row}>
               <div style={styles.field}>
                 <label style={styles.label}>{language === 'uz' ? 'Video narxi (UZS)' : language === 'ru' ? 'Цена видео (UZS)' : 'Video Price (UZS)'}</label>
@@ -292,6 +367,21 @@ export const Modal: React.FC<ModalProps> = ({
                   <option value="true">{language === 'uz' ? 'To\'landi (Paid)' : language === 'ru' ? 'Оплачено' : 'Paid'}</option>
                 </select>
               </div>
+            </div>
+          )}
+
+          {/* Professional Workflow: Assignee input */}
+          {isEditor && (
+            <div style={styles.field}>
+              <label style={styles.label}>{language === 'uz' ? 'Mas\'ul xodim (Montajchi)' : language === 'ru' ? 'Ответственный монтажер' : 'Assigned Video Editor'}</label>
+              <input 
+                type="text" 
+                name="assigneeName" 
+                value={formData.assigneeName || ''} 
+                onChange={handleChange} 
+                placeholder="e.g. Behruz, Davron"
+                style={styles.input} 
+              />
             </div>
           )}
 
@@ -334,6 +424,94 @@ export const Modal: React.FC<ModalProps> = ({
               />
             </div>
           </div>
+
+          {/* Subtask checkboxes list section */}
+          {isEditor && (
+            <div style={styles.subSection}>
+              <h4 style={styles.subTitle}>{language === 'uz' ? 'Bosqichli jarayon' : language === 'ru' ? 'Чек-лист этапов' : 'Sub-Tasks Pipeline'}</h4>
+              <div style={styles.checkList}>
+                {(formData.subTasks || []).map(st => (
+                  <div key={st.id} style={styles.checkListItem}>
+                    <input 
+                      type="checkbox" 
+                      checked={st.completed} 
+                      onChange={() => handleToggleSubTask(st.id)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span style={{ 
+                      fontSize: '13px', 
+                      color: 'var(--text-primary)', 
+                      textDecoration: st.completed ? 'line-through' : 'none', 
+                      opacity: st.completed ? 0.5 : 1,
+                      flexGrow: 1,
+                      marginLeft: '8px'
+                    }}>
+                      {st.title}
+                    </span>
+                    <button type="button" onClick={() => handleDeleteSubTask(st.id)} style={styles.deleteSmallBtn}>×</button>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <input 
+                  type="text" 
+                  value={newSubTaskText} 
+                  onChange={(e) => setNewSubTaskText(e.target.value)} 
+                  placeholder={language === 'uz' ? "Yangi bosqich qo'shish..." : "Добавить этап..."}
+                  style={{ ...styles.input, flexGrow: 1, padding: '6px 10px' }}
+                />
+                <button type="button" onClick={handleAddSubTask} style={styles.addSmallBtn}>+</button>
+              </div>
+            </div>
+          )}
+
+          {/* Feedback & revisions loop section */}
+          {isEditor && (
+            <div style={styles.subSection}>
+              <h4 style={styles.subTitle}>{language === 'uz' ? 'Tuzatishlar ro\'yxati (Feedback)' : language === 'ru' ? 'Список правок' : 'Feedback & Revisions'}</h4>
+              <div style={styles.checkList}>
+                {(formData.feedbacks || []).map(fb => (
+                  <div key={fb.id} style={styles.checkListItem}>
+                    <input 
+                      type="checkbox" 
+                      checked={fb.resolved} 
+                      onChange={() => handleToggleFeedback(fb.id)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <div style={{ flexGrow: 1, marginLeft: '8px', display: 'flex', flexDirection: 'column' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#3b82f6' }}>Timing: {fb.timestamp}</span>
+                      <span style={{ 
+                        fontSize: '13px', 
+                        color: 'var(--text-primary)', 
+                        textDecoration: fb.resolved ? 'line-through' : 'none', 
+                        opacity: fb.resolved ? 0.5 : 1 
+                      }}>
+                        {fb.comment}
+                      </span>
+                    </div>
+                    <button type="button" onClick={() => handleDeleteFeedback(fb.id)} style={styles.deleteSmallBtn}>×</button>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                <input 
+                  type="text" 
+                  value={newFeedbackTime} 
+                  onChange={(e) => setNewFeedbackTime(e.target.value)} 
+                  placeholder="0:15"
+                  style={{ ...styles.input, width: '60px', padding: '6px 10px' }}
+                />
+                <input 
+                  type="text" 
+                  value={newFeedbackText} 
+                  onChange={(e) => setNewFeedbackText(e.target.value)} 
+                  placeholder={language === 'uz' ? "Tuzatish matni..." : "Текст правки..."}
+                  style={{ ...styles.input, flexGrow: 1, padding: '6px 10px' }}
+                />
+                <button type="button" onClick={handleAddFeedback} style={styles.addSmallBtn}>+</button>
+              </div>
+            </div>
+          )}
 
           <div style={styles.field}>
             <label style={styles.label}>{t.notesLabel}</label>
@@ -436,6 +614,52 @@ const styles = {
     flexDirection: 'column' as const,
     flexGrow: 1,
     gap: '6px',
+  },
+  subSection: {
+    border: '1px solid var(--border-color)',
+    borderRadius: '12px',
+    padding: '16px',
+    backgroundColor: 'var(--bg-primary)',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+  },
+  subTitle: {
+    fontSize: '13px',
+    fontWeight: 700,
+    color: 'var(--text-primary)',
+    margin: 0,
+  },
+  checkList: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '8px',
+  },
+  checkListItem: {
+    display: 'flex',
+    alignItems: 'center',
+    backgroundColor: 'var(--bg-secondary)',
+    border: '1px solid var(--border-color)',
+    padding: '8px 12px',
+    borderRadius: '8px',
+  },
+  deleteSmallBtn: {
+    border: 'none',
+    backgroundColor: 'transparent',
+    color: '#ef4444',
+    cursor: 'pointer',
+    fontSize: '16px',
+    padding: '0 4px',
+  },
+  addSmallBtn: {
+    border: 'none',
+    backgroundColor: 'var(--accent-color)',
+    color: '#ffffff',
+    borderRadius: '8px',
+    padding: '0 14px',
+    cursor: 'pointer',
+    fontSize: '16px',
+    fontWeight: 'bold',
   },
   label: {
     fontSize: '12px',
