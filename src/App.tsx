@@ -283,6 +283,25 @@ function App() {
     }
   };
 
+  const handleClearAllDatabase = async () => {
+    if (userRole === 'viewer') return;
+    setClients([]);
+    setVideos([]);
+    if (hasSupabaseConfig()) {
+      const { error: vErr } = await supabase.from('videos').delete().neq('id', 'placeholder');
+      const { error: cErr } = await supabase.from('clients').delete().neq('id', 'placeholder');
+      if (vErr || cErr) {
+        alert("O'chirishda xatolik yuz berdi. Iltimos, qaytadan urinib ko'ring.");
+      } else {
+        alert(language === 'uz' ? "Barcha ma'lumotlar tozalandi!" : language === 'ru' ? "Все данные очищены!" : "All data cleared successfully!");
+      }
+    } else {
+      localStorage.removeItem('videoflow_clients');
+      localStorage.removeItem('videoflow_videos');
+      alert(language === 'uz' ? "Barcha ma'lumotlar tozalandi!" : language === 'ru' ? "Все данные очищены!" : "All data cleared successfully!");
+    }
+  };
+
   const t = translations[language];
 
   // Render view router
@@ -361,6 +380,7 @@ function App() {
             clients={clients} 
             safetyBuffer={safetyBuffer} 
             onUpdateSafetyBuffer={handleUpdateSafetyBuffer} 
+            onClearAllDatabase={handleClearAllDatabase}
             language={language}
             userRole={userRole}
           />

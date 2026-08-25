@@ -7,6 +7,7 @@ interface SettingsViewProps {
   clients: Client[];
   safetyBuffer: number;
   onUpdateSafetyBuffer: (val: number) => void;
+  onClearAllDatabase?: () => void;
   language: Language;
   userRole: 'editor' | 'viewer';
 }
@@ -15,6 +16,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   clients,
   safetyBuffer,
   onUpdateSafetyBuffer,
+  onClearAllDatabase,
   language,
   userRole,
 }) => {
@@ -69,6 +71,59 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           ))}
         </div>
       </div>
+
+      {/* Dangerous Zone (Clear Database) */}
+      {userRole === 'editor' && onClearAllDatabase && (
+        <div style={{ ...styles.section, border: '1px dashed #ef4444', backgroundColor: 'rgba(239, 68, 68, 0.02)' }}>
+          <h3 style={{ ...styles.sectionTitle, color: '#ef4444' }}>
+            {language === 'uz' ? 'Tizimni tozalash' : language === 'ru' ? 'Сброс данных' : 'Danger Zone'}
+          </h3>
+          <p style={styles.sectionDesc}>
+            {language === 'uz' 
+              ? 'Barcha ro\'yxatdan o\'tgan mijozlarni va rejalashtirilgan videolarni butunlay o\'chirib yuboradi.' 
+              : language === 'ru' 
+                ? 'Полностью удалит всех зарегистрированных клиентов и запланированные видео.' 
+                : 'This will delete all registered clients and planned videos completely.'}
+          </p>
+          <button
+            onClick={() => {
+              const pass = prompt(
+                language === 'uz' 
+                  ? 'Barcha ma\'lumotlarni o\'chirish uchun parolni kiriting:' 
+                  : language === 'ru' 
+                    ? 'Введите пароль для сброса всех данных:' 
+                    : 'Enter password to clear all database:'
+              );
+              if (pass === '1234') {
+                onClearAllDatabase();
+              } else {
+                alert(
+                  language === 'uz' 
+                    ? 'Noto\'g\'ri parol!' 
+                    : language === 'ru' 
+                      ? 'Неверный пароль!' 
+                      : 'Incorrect password!'
+                );
+              }
+            }}
+            style={{
+              padding: '10px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              backgroundColor: '#ef4444',
+              color: '#ffffff',
+              fontWeight: 600,
+              fontSize: '13px',
+              cursor: 'pointer',
+              alignSelf: 'flex-start',
+              marginTop: '8px',
+              boxShadow: '0 2px 6px rgba(239, 68, 68, 0.2)'
+            }}
+          >
+            {language === 'uz' ? 'Barcha ma\'lumotlarni o\'chirish' : language === 'ru' ? 'Сбросить все данные' : 'Clear All Data'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
