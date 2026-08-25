@@ -212,6 +212,16 @@ function App() {
     setIsModalOpen(false);
   };
 
+  const handleDeleteVideo = async (id: string) => {
+    if (userRole === 'viewer') return;
+    setVideos(prev => prev.filter(v => v.id !== id));
+    if (hasSupabaseConfig()) {
+      const { error } = await supabase.from('videos').delete().eq('id', id);
+      if (error) alert("Xatolik yuz berdi: " + error.message);
+    }
+    setIsModalOpen(false);
+  };
+
   const handleStatusChange = async (id: string, newStatus: VideoStatus) => {
     if (userRole === 'viewer') return;
     setVideos(prev => prev.map(v => v.id === id ? { ...v, status: newStatus } : v));
@@ -404,6 +414,7 @@ function App() {
         video={selectedVideo} 
         clients={clients} 
         onSave={handleSaveVideo} 
+        onDelete={handleDeleteVideo}
         language={language}
         userRole={userRole}
       />

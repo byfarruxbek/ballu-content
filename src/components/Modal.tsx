@@ -9,6 +9,7 @@ interface ModalProps {
   video: Video | null; // null means we are adding a new video
   clients: Client[];
   onSave: (video: Partial<Video>) => void;
+  onDelete?: (id: string) => void;
   language: Language;
   userRole: 'editor' | 'viewer';
 }
@@ -19,6 +20,7 @@ export const Modal: React.FC<ModalProps> = ({
   video,
   clients,
   onSave,
+  onDelete,
   language,
   userRole,
 }) => {
@@ -304,8 +306,28 @@ export const Modal: React.FC<ModalProps> = ({
           </div>
 
           <div style={styles.footerBtns}>
-            <button type="button" onClick={onClose} style={styles.cancelBtn}>{isViewer ? (language === 'uz' ? 'Yopish' : language === 'ru' ? 'Закрыть' : 'Close') : t.cancel}</button>
-            {!isViewer && <button type="submit" style={styles.saveBtn}>{t.save}</button>}
+            {video && video.id && !isViewer && onDelete && (
+              <button 
+                type="button" 
+                onClick={() => {
+                  const confirmMsg = language === 'uz' 
+                    ? 'Ushbu videoni o\'chirmoqchimisiz?' 
+                    : language === 'ru' 
+                      ? 'Вы уверены, что хотите удалить это видео?' 
+                      : 'Are you sure you want to delete this video?';
+                  if (window.confirm(confirmMsg)) {
+                    onDelete(video.id);
+                  }
+                }}
+                style={styles.deleteBtn}
+              >
+                {language === 'uz' ? 'O\'chirish' : language === 'ru' ? 'Удалить' : 'Delete'}
+              </button>
+            )}
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: '12px' }}>
+              <button type="button" onClick={onClose} style={styles.cancelBtn}>{isViewer ? (language === 'uz' ? 'Yopish' : language === 'ru' ? 'Закрыть' : 'Close') : t.cancel}</button>
+              {!isViewer && <button type="submit" style={styles.saveBtn}>{t.save}</button>}
+            </div>
           </div>
         </form>
       </div>
@@ -424,5 +446,16 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 600,
     fontSize: '14px',
+  },
+  deleteBtn: {
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: '1px solid #ef4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    color: '#ef4444',
+    cursor: 'pointer',
+    fontWeight: 600,
+    fontSize: '14px',
+    transition: 'all 0.15s ease',
   },
 };
