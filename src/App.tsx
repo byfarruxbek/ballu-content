@@ -53,22 +53,30 @@ function App() {
           // Fetch buffer metadata config if exists
           const { data: dbMeta } = await supabase.from('settings').select('*').single();
           
+          const hasBeenSeeded = localStorage.getItem('videoflow_seeded') === 'true';
+
           if (dbClients && dbClients.length > 0) {
             setClients(dbClients);
-          } else {
+          } else if (!hasBeenSeeded) {
             const { error: insClientsErr } = await supabase.from('clients').insert(INITIAL_CLIENTS);
             if (insClientsErr) console.error("Initial clients seed error:", insClientsErr);
             setClients(INITIAL_CLIENTS);
+          } else {
+            setClients([]);
           }
 
           if (dbVideos && dbVideos.length > 0) {
             setVideos(dbVideos);
-          } else {
+          } else if (!hasBeenSeeded) {
             const initialVids = getInitialVideos();
             const { error: insVideosErr } = await supabase.from('videos').insert(initialVids);
             if (insVideosErr) console.error("Initial videos seed error:", insVideosErr);
             setVideos(initialVids);
+          } else {
+            setVideos([]);
           }
+
+          localStorage.setItem('videoflow_seeded', 'true');
 
           if (dbMeta) {
             setSafetyBuffer(dbMeta.safety_buffer || 1);
@@ -84,11 +92,14 @@ function App() {
     }
 
     function fallbackToLocal() {
+      const hasBeenSeeded = localStorage.getItem('videoflow_seeded') === 'true';
       const savedClients = localStorage.getItem('videoflow_clients');
-      setClients(savedClients ? JSON.parse(savedClients) : INITIAL_CLIENTS);
+      setClients(savedClients ? JSON.parse(savedClients) : (hasBeenSeeded ? [] : INITIAL_CLIENTS));
 
       const savedVideos = localStorage.getItem('videoflow_videos');
-      setVideos(savedVideos ? JSON.parse(savedVideos) : getInitialVideos());
+      setVideos(savedVideos ? JSON.parse(savedVideos) : (hasBeenSeeded ? [] : getInitialVideos()));
+
+      localStorage.setItem('videoflow_seeded', 'true');
 
       const savedBuffer = localStorage.getItem('videoflow_buffer');
       setSafetyBuffer(savedBuffer ? parseInt(savedBuffer, 10) : 1);
@@ -99,13 +110,13 @@ function App() {
 
   // Sync state to local storage (for fallback)
   React.useEffect(() => {
-    if (!loading && clients.length > 0) {
+    if (!loading) {
       localStorage.setItem('videoflow_clients', JSON.stringify(clients));
     }
   }, [clients, loading]);
 
   React.useEffect(() => {
-    if (!loading && videos.length > 0) {
+    if (!loading) {
       localStorage.setItem('videoflow_videos', JSON.stringify(videos));
     }
   }, [videos, loading]);
