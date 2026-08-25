@@ -139,10 +139,10 @@ function App() {
     } else {
       const password = prompt(
         language === 'uz' 
-          ? 'Rejimga o\'tish uchun parolni kiriting:\n(Meneger: 1111, Editor: 1212)' 
+          ? 'Rejimga o\'tish uchun parolni kiriting:' 
           : language === 'ru' 
-            ? 'Введите пароль для входа:\n(Менеджер: 1111, Редактор: 1212)' 
-            : 'Enter password to change role:\n(Manager: 1111, Editor: 1212)'
+            ? 'Введите пароль для входа:' 
+            : 'Enter password to change role:'
       );
       if (password === '1111') {
         setUserRole('manager');
