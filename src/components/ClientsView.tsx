@@ -384,7 +384,7 @@ const styles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
     gap: '20px',
   },
   clientCard: {
@@ -500,16 +500,16 @@ const styles = {
   },
   metricsGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '12px',
-    marginTop: '8px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+    gap: '10px',
+    marginTop: '12px',
   },
   metricItem: {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
     backgroundColor: 'var(--bg-primary)',
-    padding: '8px 12px',
+    padding: '6px 10px',
     borderRadius: '8px',
     border: '1px solid var(--border-color)',
   },
@@ -518,14 +518,15 @@ const styles = {
     flexDirection: 'column' as const,
   },
   metricVal: {
-    fontSize: '13px',
+    fontSize: '12px',
     fontWeight: 700,
     color: 'var(--text-primary)',
   },
   metricLabel: {
-    fontSize: '9px',
+    fontSize: '10px',
     color: 'var(--text-muted)',
     fontWeight: 500,
+    whiteSpace: 'nowrap' as const,
   },
   editForm: {
     display: 'flex',

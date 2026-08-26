@@ -56,7 +56,12 @@ function App() {
           const hasBeenSeeded = localStorage.getItem('videoflow_seeded') === 'true';
 
           if (dbClients && dbClients.length > 0) {
-            setClients(dbClients);
+            // Map default properties for older client items
+            const parsedClients = dbClients.map(c => ({
+              monthlyContractPrice: 0,
+              ...c
+            }));
+            setClients(parsedClients);
           } else if (!hasBeenSeeded) {
             const { error: insClientsErr } = await supabase.from('clients').insert(INITIAL_CLIENTS);
             if (insClientsErr) console.error("Initial clients seed error:", insClientsErr);
@@ -66,7 +71,16 @@ function App() {
           }
 
           if (dbVideos && dbVideos.length > 0) {
-            setVideos(dbVideos);
+            // Map default properties for older video items
+            const parsedVideos = dbVideos.map(v => ({
+              price: 0,
+              isPaid: false,
+              subTasks: [],
+              feedbacks: [],
+              assigneeName: '',
+              ...v
+            }));
+            setVideos(parsedVideos);
           } else if (!hasBeenSeeded) {
             const initialVids = getInitialVideos();
             const { error: insVideosErr } = await supabase.from('videos').insert(initialVids);
